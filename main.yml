@@ -1,0 +1,43 @@
+name: Zomato app deployment CI-CD
+
+on:
+  push:
+    branches:
+      - Deployment 
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest   
+
+    steps:
+      # Clone the code
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      # Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ var.USERNAME_DOCKER }}
+          password: ${{ secrets.PASSWORD_DOCKER }}
+
+      # Build the Docker image
+      - name: Build the Docker image
+        run: docker build -t ${{ var.DOCKER_USERNAME }}/zomatoimage:latest .
+
+      # Push image to Docker Hub
+      - name: Push to Docker Hub
+        run: docker push ${{ var.DOCKER_USERNAME }}/zomatoimage:latest
+
+      # Deploy to EC2 using SSH
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            docker pull ${{ var.DOCKER_USERNAME }}/zomatoimage:latest
+            docker stop zomato-container || true
+            docker rm zomato-container || true
+            docker run -d -p 80:80 --name zomato-container ${{ var.DOCKER_USERNAME }}/zomatoimage:latest
