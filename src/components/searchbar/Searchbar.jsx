@@ -1,5 +1,5 @@
-import Leftsearch from './leftsearch';
-import Rightsearch from './rightsearch';
+import Leftsearch from './Leftsearch';
+import Rightsearch from './Rightsearch';
 
 import './Searchbar.css'
 
